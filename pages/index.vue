@@ -4,39 +4,56 @@
 </script>
 
 <template>
-    <div class="sidebar">
-        <h1>CA</h1>
+    <div id="chat-panel">
+        <div class="sidebar">
+            <h1>CA</h1>
 
-        <div class="options">
-            <button class="btn">
-                <img src="/user.png" alt="" srcset="">
-            </button>
+            <div class="options">
+                <button class="btn">
+                    <img src="/user.png" alt="" srcset="">
+                </button>
 
-            <button class="btn active">
-                <img src="/message.png" alt="" srcset="">
-            </button>
+                <button class="btn active">
+                    <img src="/message.png" alt="" srcset="">
+                </button>
 
-            <button class="btn">
-                <img src="/group.png" alt="" srcset="">
-            </button>
+                <button class="btn">
+                    <img src="/group.png" alt="" srcset="">
+                </button>
 
-            <button class="btn"> 
-                <img src="/contact.png" alt="" srcset="">
-            </button>
+                <button class="btn">
+                    <img src="/contact.png" alt="" srcset="">
+                </button>
+            </div>
         </div>
-    </div>
 
-    <div class="chat-bar">
+        <div class="chat-bar">
 
-    </div>
+        </div>
 
-    <div class="user-chat">
-        <input v-model="msg" type="text">
-        <button @click="sendMsg">Send</button>
+        <div class="user-chat">
+            <div class="user-info">
+                <img src="/user.png" alt="">
+                <p>User Name</p>
+            </div>
+
+            <div class="chat-panel">
+
+            </div>
+
+            <div class="chat-action">
+                <input type="text" placeholder="Enter Message">
+                <button class="btn">Send</button>
+            </div>
+        </div>
     </div>
 </template>
 
 <style lang="scss">
+#chat-panel {
+    display: flex;
+}
+
 .sidebar {
     padding: 20px 0;
     background: #fff;
@@ -71,6 +88,64 @@
         img {
             display: block;
             width: 100%;
+        }
+    }
+}
+
+.chat-bar {
+    max-width: 320px;
+    min-width: 320px;
+    background-color: #f5f7fb;
+    height: 100vh;
+}
+
+.user-chat {
+    width: 100%;
+    position: relative;
+
+    .user-info {
+        padding: 20px;
+        background: #fff;
+        border-bottom: 1px solid #ccc;
+        display: flex;
+        align-items: center;
+
+        img {
+            background-color: #ccc;
+            height: 45px;
+            width: 45px;
+            padding: 10px;
+            border-radius: 50%;
+        }
+
+        p {
+            margin-left: 15px;
+        }
+    }
+
+    .chat-action {
+        width: 100%;
+        position: absolute;
+        bottom: 0;
+        padding: 20px;
+        background: #fff;
+        border-bottom: 1px solid #ccc;
+        display: flex;
+        align-items: center;
+
+
+        input {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            margin-right: 20px;
+
+            &:focus {
+                border-color: #ccc;
+                outline: none;
+            }
         }
     }
 }
