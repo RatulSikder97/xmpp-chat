@@ -11,7 +11,9 @@
   "devDependencies": {
     "@types/node": "^18",
     "@types/strophe.js": "^1.4.1",
-    "nuxt": "^3.5.0"
+    "nuxt": "^3.5.0",
+    "sass": "^1.62.1",
+    "sass-loader": "^13.3.0"
   },
   "dependencies": {
     "strophe.js": "^1.6.1"
