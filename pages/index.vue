@@ -1,5 +1,77 @@
 <script setup>
+import { storeToRefs } from 'pinia'
+let un = localStorage.getItem('username')
+let pass = localStorage.getItem('pass')
+let connection = new Strophe.Connection("http://localhost:5280/http-bind");
 
+const { $mainStore } = useNuxtApp()
+const store = $mainStore
+
+const { contacts } = storeToRefs($mainStore)
+
+if (!un || !pass) {
+    navigateTo('/login')
+} else {
+    connection.connect(un, pass, onConnect)
+    console.log(connection.connected)
+}
+
+function onConnect(status) {
+    if (status == Strophe.Status.CONNECTED) {
+
+        connection.addHandler(handleMessage, null, 'message', 'chat');
+        var iq = $iq({ type: "get" }).c("query", { xmlns: "jabber:iq:roster" });
+
+        connection.sendIQ(iq, function (response) {
+            var items = response.getElementsByTagName("item");
+
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                var jid = item.getAttribute("jid");
+                var name = item.getAttribute("name");
+
+
+                // contacts.push({name, jid});
+                store.setContact({ name, jid });
+            }
+        });
+        console.log(store.getCotact);
+    }
+}
+
+let message;
+let activeReciever  = reactive({ jid : '', name: ''});
+function sendMsg() {
+    if(message && activeReciever.jid) {
+
+        var msg = $msg({
+            to: activeReciever.jid,
+            type: 'chat'
+        }).c('body').t(message);
+    
+        connection.send(msg);
+    }
+}
+
+function handleMessage(message) {
+    var from = message.getAttribute('from');
+    var body = message.getElementsByTagName('body')[0];
+
+    if (body) {
+        var messageText = Strophe.getText(body);
+        console.log('Received message from ' + from + ': ' + messageText);
+    }
+
+    // Return true to keep the handler active and continue receiving messages
+    return true;
+}
+
+
+
+function makeActive(d) {
+    activeReciever.jid = d.jid;
+    activeReciever.name = d.name;
+}
 
 </script>
 
@@ -28,13 +100,16 @@
         </div>
 
         <div class="chat-bar">
-
+            <li v-for="(d, i) in store.getCotact" :key="i" :class="{active: (activeReciever.jid == d.jid)}" @click="makeActive(d)">
+                <img src="/user.png" alt="">
+                <p>{{ d.name }}</p>
+            </li>
         </div>
 
         <div class="user-chat">
             <div class="user-info">
                 <img src="/user.png" alt="">
-                <p>User Name</p>
+                <p>{{ activeReciever.name }}</p>
             </div>
 
             <div class="chat-panel">
@@ -42,8 +117,8 @@
             </div>
 
             <div class="chat-action">
-                <input type="text" placeholder="Enter Message">
-                <button class="btn">Send</button>
+                <input type="text" v-model="message" placeholder="Enter Message">
+                <button class="btn" @click="sendMsg()">Send</button>
             </div>
         </div>
     </div>
@@ -97,6 +172,35 @@
     min-width: 320px;
     background-color: #f5f7fb;
     height: 100vh;
+
+
+    li {
+        padding: 5px;
+        border-bottom: 1px solid #ccc;
+        display: flex;
+        align-items: center;
+        background-color: #ccc;
+        width: 85%;
+        margin: 10px auto;
+        border-radius: 5px;
+        cursor: pointer;
+
+        &.active {
+            background-color: #4f77ff90;
+        }
+    }
+
+    img {
+        background-color: #ccc;
+        height: 45px;
+        width: 45px;
+        padding: 10px;
+        border-radius: 50%;
+    }
+
+    p {
+        margin-left: 15px;
+    }
 }
 
 .user-chat {

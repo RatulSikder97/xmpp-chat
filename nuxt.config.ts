@@ -1,6 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
 
+  modules: ['@pinia/nuxt'],
   app: {
     head: {
       link:[{
@@ -15,5 +16,7 @@ export default defineNuxtConfig({
   plugins: [
     // Other plugins...
     { src: "./plugins/strophe-config.ts", mode: "client" },
+    { src: "./plugins/pinia.ts", mode: 'client'}
   ],
+
 });
