@@ -4,10 +4,8 @@ let un = localStorage.getItem('username')
 let pass = localStorage.getItem('pass')
 let connection = new Strophe.Connection("http://localhost:5280/http-bind");
 
-const { $mainStore } = useNuxtApp()
-const store = $mainStore
-
-const { contacts } = storeToRefs($mainStore)
+const { $mainStore } = useNuxtApp();
+const store = $mainStore;
 
 if (!un || !pass) {
     navigateTo('/login')
@@ -32,7 +30,7 @@ function onConnect(status) {
 
 
                 // contacts.push({name, jid});
-                store.setContact({ name, jid });
+                store.setContact({ name, jid, isActive: i==0 });
             }
         });
         console.log(store.getCotact);
@@ -42,14 +40,16 @@ function onConnect(status) {
 let message;
 let activeReciever  = reactive({ jid : '', name: ''});
 function sendMsg() {
-    if(message && activeReciever.jid) {
+
+    if(message && store.getActiveContact.jid) {
 
         var msg = $msg({
-            to: activeReciever.jid,
+            to: store.getActiveContact.jid,
             type: 'chat'
         }).c('body').t(message);
     
         connection.send(msg);
+        store.setMsg({from: localStorage.getItem('username').split('/')[0], to: store.getActiveContact.jid.split('/')[0], message: message})
     }
 }
 
@@ -60,6 +60,8 @@ function handleMessage(message) {
     if (body) {
         var messageText = Strophe.getText(body);
         console.log('Received message from ' + from + ': ' + messageText);
+
+        store.setMsg({from, to: localStorage.getItem('username').split('/')[0], message: messageText})
     }
 
     // Return true to keep the handler active and continue receiving messages
@@ -67,10 +69,8 @@ function handleMessage(message) {
 }
 
 
-
 function makeActive(d) {
-    activeReciever.jid = d.jid;
-    activeReciever.name = d.name;
+    store.setActive(d.jid)
 }
 
 </script>
@@ -100,7 +100,7 @@ function makeActive(d) {
         </div>
 
         <div class="chat-bar">
-            <li v-for="(d, i) in store.getCotact" :key="i" :class="{active: (activeReciever.jid == d.jid)}" @click="makeActive(d)">
+            <li v-for="(d, i) in store.getCotact" :key="i" :class="{active: d.isActive}" @click="makeActive(d)">
                 <img src="/user.png" alt="">
                 <p>{{ d.name }}</p>
             </li>
@@ -109,7 +109,7 @@ function makeActive(d) {
         <div class="user-chat">
             <div class="user-info">
                 <img src="/user.png" alt="">
-                <p>{{ activeReciever.name }}</p>
+                <p>{{ store.getActiveContact }}</p>
             </div>
 
             <div class="chat-panel">
