@@ -3,6 +3,7 @@ import { storeToRefs } from 'pinia'
 let un = localStorage.getItem('username')
 let pass = localStorage.getItem('pass')
 let connection = new Strophe.Connection("http://localhost:5280/http-bind");
+let loggedInUser = un.split('/')[0];
 
 const { $mainStore } = useNuxtApp();
 const store = $mainStore;
@@ -14,8 +15,15 @@ if (!un || !pass) {
     console.log(connection.connected)
 }
 
+let activeJid = reactive({jid: ""})
+
 function onConnect(status) {
     if (status == Strophe.Status.CONNECTED) {
+
+        $msg({
+            to: 'ratul@chat.beeda.com',
+            type: 'chat'
+        }).c('body').t('hi');
 
         connection.addHandler(handleMessage, null, 'message', 'chat');
         var iq = $iq({ type: "get" }).c("query", { xmlns: "jabber:iq:roster" });
@@ -30,7 +38,10 @@ function onConnect(status) {
 
 
                 // contacts.push({name, jid});
-                store.setContact({ name, jid, isActive: i==0 });
+                if(i==0) {
+                    activeJid.jid = jid;
+                }
+                 store.setContact({ name, jid, isActive: i==0 });
             }
         });
         console.log(store.getCotact);
@@ -50,18 +61,20 @@ function sendMsg() {
     
         connection.send(msg);
         store.setMsg({from: localStorage.getItem('username').split('/')[0], to: store.getActiveContact.jid.split('/')[0], message: message})
+        message = '';
     }
 }
 
 function handleMessage(message) {
     var from = message.getAttribute('from');
     var body = message.getElementsByTagName('body')[0];
+    console.log(message);
 
     if (body) {
         var messageText = Strophe.getText(body);
         console.log('Received message from ' + from + ': ' + messageText);
 
-        store.setMsg({from, to: localStorage.getItem('username').split('/')[0], message: messageText})
+        store.setMsg({from:  from.split('/')[0], to: localStorage.getItem('username').split('/')[0], message: messageText})
     }
 
     // Return true to keep the handler active and continue receiving messages
@@ -71,6 +84,7 @@ function handleMessage(message) {
 
 function makeActive(d) {
     store.setActive(d.jid)
+    activeJid.jid = d.jid;
 }
 
 </script>
@@ -113,7 +127,9 @@ function makeActive(d) {
             </div>
 
             <div class="chat-panel">
-
+                <div class="chat-text" v-for="(d, i) in store.getMessageByActiveUser(activeJid.jid)" :key="i" :class="{received: d.to == loggedInUser}">
+                    {{ d.message }}
+                </div>
             </div>
 
             <div class="chat-action">
@@ -250,6 +266,24 @@ function makeActive(d) {
                 border-color: #ccc;
                 outline: none;
             }
+        }
+    }
+}
+
+.chat-panel {
+    padding: 20px;
+    .chat-text {
+        padding: 10px;
+        background-color: #4f77ff90;
+        border-radius: 10px;
+        margin-top: 10px;
+        margin-left: auto;
+        max-width: 75%;
+        width: fit-content;
+
+        &.received {
+            background-color: #fff;
+            margin-left: unset;
         }
     }
 }
