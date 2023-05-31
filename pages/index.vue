@@ -23,15 +23,15 @@ function onConnect(status) {
 
 
         connection.addHandler(handleMessage, null, 'message', 'chat');
-        var iq = $iq({ type: "get" }).c("query", { xmlns: "jabber:iq:roster" });
+        let iq = $iq({ type: "get" }).c("query", { xmlns: "jabber:iq:roster" });
 
         connection.sendIQ(iq, function (response) {
-            var items = response.getElementsByTagName("item");
+            let items = response.getElementsByTagName("item");
 
-            for (var i = 0; i < items.length; i++) {
-                var item = items[i];
-                var jid = item.getAttribute("jid");
-                var name = item.getAttribute("name");
+            for (let i = 0; i < items.length; i++) {
+                let item = items[i];
+                let jid = item.getAttribute("jid");
+                let name = item.getAttribute("name");
 
 
                 // contacts.push({name, jid});
@@ -51,7 +51,7 @@ function sendMsg() {
 
     if (message && store.getActiveContact.jid) {
 
-        var msg = $msg({
+        let msg = $msg({
             to: store.getActiveContact.jid,
             type: 'chat'
         }).c('body').t(message);
@@ -63,33 +63,22 @@ function sendMsg() {
 }
 
 function handleMessage(message) {
-    var from = message.getAttribute('from');
-    var body = message.getElementsByTagName('body')[0];
+    let from = message.getAttribute('from');
+    let body = message.getElementsByTagName('body')[0];
 
-    var attachments = message.getElementsByTagName('attachment');
+    let attachments = message.getElementsByTagName('attachment');
 
     console.log(attachments);
     if (attachments.length > 0) {
-        var attachment = attachments[0];
-        var contentType = attachment.getAttribute('content-type');
-        var body = attachment.getElementsByTagName('body')[0].textContent;
+        let attachment = attachments[0];
+        let contentType = attachment.getAttribute('content-type');
+        let body = attachment.getElementsByTagName('body')[0].textContent;
         console.log(body);
-        var imageData = Uint8Array.from(atob(body), function (c) { return c.charCodeAt(0); });
-
-        // Create a Blob from the binary data
-        var blob = new Blob([imageData], { type: contentType });
-
-        // Create an object URL for the Blob
-        var imageUrl = URL.createObjectURL(blob);
-
-        // Create an image element and set the source to the object URL
-        var imageElement = document.createElement('img');
-        imageElement.src = imageUrl;
-        document.body.appendChild(imageElement);
+        
     }
 
     if (body) {
-        var messageText = Strophe.getText(body);
+        let messageText = Strophe.getText(body);
         console.log('Received message from ' + from + ': ' + messageText);
 
         store.setMsg({ from: from.split('/')[0], to: localStorage.getItem('username').split('/')[0], message: messageText })
@@ -99,25 +88,25 @@ function handleMessage(message) {
     return true;
 }
 function sendFile(event) {
-    var file = event.target.files[0];
+    let file = event.target.files[0];
 
     // Read the file as binary data
-    var reader = new FileReader();
+    let reader = new FileReader();
     reader.onloadend = function () {
-        var imageData = new Uint8Array(reader.result);
+        let imageData = new Uint8Array(reader.result);
 
         // Create the message with the image data
-        var message = $msg({
+        let message = $msg({
             to: store.getActiveContact.jid,
             type: 'chat'
         });
 
-        var attachment = $build('attachment', {
+        let attachment = $build('attachment', {
             xmlns: 'urn:xmpp:attachment',
             'content-type': file.type
         });
 
-        var body = $build('body').t(btoa(String.fromCharCode.apply(null, imageData)));
+        let body = $build('body').t(btoa(String.fromCharCode.apply(null, imageData)));
         attachment.cnode(body.tree());
 
         message.cnode(attachment.tree());
