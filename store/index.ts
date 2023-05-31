@@ -23,6 +23,9 @@ export const useMainStore = defineStore('main', {
         },
         setMsg(msg: any) {
             this.message = [...this.message, msg]
+        },
+        getMessageByActiveUser(user: any): any {
+            return this.message.filter(m => ((m.from == user && m.to == localStorage.getItem('username')?.split('/')[0]) || (m.to == user && m.from == localStorage.getItem('username')?.split('/')[0]) ))
         }
     },
     getters: {
@@ -32,6 +35,10 @@ export const useMainStore = defineStore('main', {
 
         getActiveContact(): any {
             return this.contacts.filter(contact => { return contact.isActive })[0]
+        },
+
+        getAllMessage(): any {
+            return this.message;
         }
     },
 
