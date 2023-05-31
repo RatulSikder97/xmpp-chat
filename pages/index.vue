@@ -18,11 +18,6 @@ let activeJid = reactive({ jid: "" })
 
 function onConnect(status) {
     if (status == Strophe.Status.CONNECTED) {
-
-
-
-        connection.addHandler(handleMessage, null, 'message', 'chat');
-        
         let iq = $iq({ type: "get" }).c("query", { xmlns: "jabber:iq:roster" });
 
         connection.sendIQ(iq, function (response) {
@@ -41,25 +36,51 @@ function onConnect(status) {
                 store.setContact({ name, jid, isActive: i == 0 });
             }
         });
-        console.log(store.getCotact);
+
+        connection.addHandler(onMessage, null, 'message', null, null, null);
+
     }
 }
 
-let message;
+let message = ''
 let activeReciever = reactive({ jid: '', name: '' });
 function sendMsg() {
+    console.log(message);
 
     if (message && store.getActiveContact.jid) {
 
+//         var m = $msg({
+//     to: $('#to').get(0).value,
+//     from: $('#jid').get(0).value,
+//     type: 'chat'
+//   }).c("body").t(msg);
+//   connection.send(m);
         let msg = $msg({
             to: store.getActiveContact.jid,
+            from: un,
             type: 'chat'
         }).c('body').t(message);
 
+       
+        message = '';
         connection.send(msg);
         store.setMsg({ from: localStorage.getItem('username').split('/')[0], to: store.getActiveContact.jid.split('/')[0], message: message })
-        message = '';
     }
+}
+
+function onMessage(msg) {
+    let to = msg.getAttribute('to');
+    let from = msg.getAttribute('from');
+    let type = msg.getAttribute('type');
+    let elems = msg.getElementsByTagName('body');
+
+    if (type == "chat" && elems.length > 0) {
+        let body = elems[0];
+        log('CHAT: I got a message from ' + from + ': ' + Strophe.getText(body));
+    }
+    // we must return true to keep the handler alive.
+    // returning false would remove it after it finishes.
+    return true;
 }
 
 function handleMessage(message) {
@@ -74,7 +95,7 @@ function handleMessage(message) {
         let contentType = attachment.getAttribute('content-type');
         let body = attachment.getElementsByTagName('body')[0].textContent;
         console.log(body);
-        
+
     }
 
     if (body) {
