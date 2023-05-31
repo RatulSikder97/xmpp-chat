@@ -33,6 +33,18 @@ button {
             background: darken($primaryColor, 2%);
         }
     }
+
+    &.attachment {
+        width: 80px;
+        padding: 0 !important;
+        margin: 0 !important;
+
+        background-color: transparent;
+        img {
+            display: block;
+            width: 100%;
+        }
+    }
 }
 
 

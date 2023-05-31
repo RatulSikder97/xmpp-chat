@@ -15,15 +15,12 @@ if (!un || !pass) {
     console.log(connection.connected)
 }
 
-let activeJid = reactive({jid: ""})
+let activeJid = reactive({ jid: "" })
 
 function onConnect(status) {
     if (status == Strophe.Status.CONNECTED) {
 
-        $msg({
-            to: 'ratul@chat.beeda.com',
-            type: 'chat'
-        }).c('body').t('hi');
+
 
         connection.addHandler(handleMessage, null, 'message', 'chat');
         var iq = $iq({ type: "get" }).c("query", { xmlns: "jabber:iq:roster" });
@@ -38,10 +35,10 @@ function onConnect(status) {
 
 
                 // contacts.push({name, jid});
-                if(i==0) {
+                if (i == 0) {
                     activeJid.jid = jid;
                 }
-                 store.setContact({ name, jid, isActive: i==0 });
+                store.setContact({ name, jid, isActive: i == 0 });
             }
         });
         console.log(store.getCotact);
@@ -49,18 +46,18 @@ function onConnect(status) {
 }
 
 let message;
-let activeReciever  = reactive({ jid : '', name: ''});
+let activeReciever = reactive({ jid: '', name: '' });
 function sendMsg() {
 
-    if(message && store.getActiveContact.jid) {
+    if (message && store.getActiveContact.jid) {
 
         var msg = $msg({
             to: store.getActiveContact.jid,
             type: 'chat'
         }).c('body').t(message);
-    
+
         connection.send(msg);
-        store.setMsg({from: localStorage.getItem('username').split('/')[0], to: store.getActiveContact.jid.split('/')[0], message: message})
+        store.setMsg({ from: localStorage.getItem('username').split('/')[0], to: store.getActiveContact.jid.split('/')[0], message: message })
         message = '';
     }
 }
@@ -68,17 +65,68 @@ function sendMsg() {
 function handleMessage(message) {
     var from = message.getAttribute('from');
     var body = message.getElementsByTagName('body')[0];
-    console.log(message);
+
+    var attachments = message.getElementsByTagName('attachment');
+
+    console.log(attachments);
+    if (attachments.length > 0) {
+        var attachment = attachments[0];
+        var contentType = attachment.getAttribute('content-type');
+        var body = attachment.getElementsByTagName('body')[0].textContent;
+        console.log(body);
+        var imageData = Uint8Array.from(atob(body), function (c) { return c.charCodeAt(0); });
+
+        // Create a Blob from the binary data
+        var blob = new Blob([imageData], { type: contentType });
+
+        // Create an object URL for the Blob
+        var imageUrl = URL.createObjectURL(blob);
+
+        // Create an image element and set the source to the object URL
+        var imageElement = document.createElement('img');
+        imageElement.src = imageUrl;
+        document.body.appendChild(imageElement);
+    }
 
     if (body) {
         var messageText = Strophe.getText(body);
         console.log('Received message from ' + from + ': ' + messageText);
 
-        store.setMsg({from:  from.split('/')[0], to: localStorage.getItem('username').split('/')[0], message: messageText})
+        store.setMsg({ from: from.split('/')[0], to: localStorage.getItem('username').split('/')[0], message: messageText })
     }
 
     // Return true to keep the handler active and continue receiving messages
     return true;
+}
+function sendFile(event) {
+    var file = event.target.files[0];
+
+    // Read the file as binary data
+    var reader = new FileReader();
+    reader.onloadend = function () {
+        var imageData = new Uint8Array(reader.result);
+
+        // Create the message with the image data
+        var message = $msg({
+            to: store.getActiveContact.jid,
+            type: 'chat'
+        });
+
+        var attachment = $build('attachment', {
+            xmlns: 'urn:xmpp:attachment',
+            'content-type': file.type
+        });
+
+        var body = $build('body').t(btoa(String.fromCharCode.apply(null, imageData)));
+        attachment.cnode(body.tree());
+
+        message.cnode(attachment.tree());
+
+        // Send the message
+        connection.send(message.tree());
+    };
+
+    reader.readAsArrayBuffer(file);
 }
 
 
@@ -114,7 +162,7 @@ function makeActive(d) {
         </div>
 
         <div class="chat-bar">
-            <li v-for="(d, i) in store.getCotact" :key="i" :class="{active: d.isActive}" @click="makeActive(d)">
+            <li v-for="(d, i) in store.getCotact" :key="i" :class="{ active: d.isActive }" @click="makeActive(d)">
                 <img src="/user.png" alt="">
                 <p>{{ d.name }}</p>
             </li>
@@ -127,13 +175,15 @@ function makeActive(d) {
             </div>
 
             <div class="chat-panel">
-                <div class="chat-text" v-for="(d, i) in store.getMessageByActiveUser(activeJid.jid)" :key="i" :class="{received: d.to == loggedInUser}">
+                <div class="chat-text" v-for="(d, i) in store.getMessageByActiveUser(activeJid.jid)" :key="i"
+                    :class="{ received: d.to == loggedInUser }">
                     {{ d.message }}
                 </div>
             </div>
 
             <div class="chat-action">
                 <input type="text" v-model="message" placeholder="Enter Message">
+                <input type="file" class="btn" style="width: 160px" name="" id="" @change="sendFile($event)">
                 <button class="btn" @click="sendMsg()">Send</button>
             </div>
         </div>
@@ -272,6 +322,7 @@ function makeActive(d) {
 
 .chat-panel {
     padding: 20px;
+
     .chat-text {
         padding: 10px;
         background-color: #4f77ff90;
