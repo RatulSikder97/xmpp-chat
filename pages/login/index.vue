@@ -6,7 +6,7 @@ const store = $mainStore
 let email;
 let password;
 
-let connection = new Strophe.Connection("http://localhost:5280/http-bind");
+let connection = new Strophe.Connection("http://chat.beeda.com:5280/http-bind");
 
 
 function login() {

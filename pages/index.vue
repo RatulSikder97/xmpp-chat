@@ -2,7 +2,7 @@
 import { storeToRefs } from 'pinia'
 let un = localStorage.getItem('username')
 let pass = localStorage.getItem('pass')
-let connection = new Strophe.Connection("http://localhost:5280/http-bind");
+let connection = new Strophe.Connection("http://chat.beeda.com:5280/http-bind");
 let loggedInUser = un.split('/')[0];
 
 const { $mainStore } = useNuxtApp();
@@ -12,7 +12,6 @@ if (!un || !pass) {
     navigateTo('/login')
 } else {
     connection.connect(un, pass, onConnect)
-    console.log(connection.connected)
 }
 
 let activeJid = reactive({ jid: "" })
@@ -23,6 +22,12 @@ function onConnect(status) {
 
 
         connection.addHandler(handleMessage, null, 'message', 'chat');
+        // set presence
+        connection.send($pres());
+        // set handlers
+        connection.addHandler(onMessage, null, 'message', null, null, null);
+        connection.addHandler(onSubscriptionRequest, null, "presence", "subscribe");
+        connection.addHandler(onPresence, null, "presence");
         let iq = $iq({ type: "get" }).c("query", { xmlns: "jabber:iq:roster" });
 
         connection.sendIQ(iq, function (response) {
@@ -44,6 +49,8 @@ function onConnect(status) {
         console.log(store.getCotact);
     }
 }
+
+
 
 let message;
 let activeReciever = reactive({ jid: '', name: '' });
